@@ -70,3 +70,19 @@ k6.exe v2.2.0 (commit/00a9a1b7f5, go1.26.5, windows/amd64)
 - Request-based availability (`checks`): 98.20% (`rate>0.90` PASS)
 
 Бүтэн k6 гаралт: [`results/pass.txt`](results/pass.txt). Screenshot: [normal PASS output](screenshots/pass.png).
+
+## Chaos test — 10 секундийн server stop
+
+`slo-test.js`-ийг `--duration 2m` тохиргоотой ажиллуулж байх үед local Express server-ийг Ctrl+C-ээр зогсоож, 10 секундийн дараа дахин `node server.js` командаар асаасан. Бодит request-based availability нь `4,844 / 5,697 = 85.02%` болсон тул `rate>0.90` availability threshold FAIL болов.
+
+- Cart p95: 2.58 ms (`p(95)<30` PASS)
+- Report p95: 395.98 ms (`p(95)<450` PASS)
+- Pay error rate: 17.79% (`rate<0.08` FAIL)
+- Бүх HTTP хүсэлтийн error rate: 14.97% (853 / 5,697)
+- Request-based availability: 85.02% (4,844 / 5,697; `rate>0.90` FAIL)
+
+90%-ийн availability SLO нь 5,697 checks дээр хамгийн ихдээ ойролцоогоор 570 failed check зөвшөөрнө. Бодит 853 failed check гарсан нь request-based error budget-ийг ойролцоогоор 283 check-ээр хэтрүүлсэн. Харин 2 минутын цонхонд тооцсон time-based budget 12 секунд байсан ч server унахад connection-refused хүсэлтүүд `/report`-ын 200–400 ms хүлээлтгүйгээр хурдан буцдаг тул нэг секундэд илүү олон failed request бүртгэгдэж, request-based budget богино хугацаанд хэтэрсэн.
+
+Chaos үед server унасан тул `/pay` хүсэлтүүд ч зэрэг унаж reliability threshold мөн FAIL болсон. Availability SLI-г reliability-гээс тусгаарлахын тулд availability check-д зөвхөн cart/report зэрэг endpoint-уудын health check-ийг оруулж, `/pay`-ийн endpoint tag-тэй error rate-ийг reliability SLI болгон тусад нь үнэлж болно.
+
+Бүтэн k6 гаралт: [`results/chaos.txt`](results/chaos.txt). Screenshots: [chaos summary](screenshots/chaos.png), [chaos thresholds](screenshots/chaos-thresholds.png).
