@@ -48,3 +48,14 @@ k6.exe v2.2.0 (commit/00a9a1b7f5, go1.26.5, windows/amd64)
 | Гадаад өдөөлт | Серверийн crash болон 10 секундын тасалдал. |
 | Шаардлагатай хариу | Сервер дахин асмагц endpoint-ууд хүсэлт хүлээн авч, тестийн үлдсэн хугацаанд хариулна. |
 | Хэмжүүр | Бүх check-ийн request-based availability хувь нь SLO босгоос багагүй, сэргэх хугацаа 10 секунд байна. |
+
+## SLO ба threshold
+
+| Сценарио | SLI | Босго | Цонх / нөхцөл | k6 threshold |
+|---|---|---:|---|---|
+| Performance | `/cart/add` latency | p95 < 30 ms | 20 VU тогтмол ачаалал, 1 минут | `http_req_duration{name:cart}: p(95)<30` |
+| Reliability | `/pay` error rate | < 8% | 20 VU тогтмол ачаалал, 1 минут | `http_req_failed{name:pay}: rate<0.08` |
+| Availability | Бүх check-ийн request-based availability | > 90% | 20 VU, 2 минут; 10 секунд server stop орсон | `checks: rate>0.90` |
+| Нэмэлт performance | `/report` latency | p95 < 450 ms | 20 VU тогтмол ачаалал, 1 минут | `http_req_duration{name:report}: p(95)<450` |
+
+`/cart/add` нь локал, хөнгөн endpoint тул p95 < 30 ms босго сонгосон; 200 ms нь бодит гүйцэтгэлийг ялгахгүй хэт сул байх болно. `/report` нь 200–400 ms зориудын сааталтай учраас p95 < 450 ms босго бодитой нөөцтэй. `/pay` endpoint-ийн загварчилсан алдаа ойролцоогоор 5% тул < 8% босго нь хэвийн хэлбэлзлийг зөвшөөрнө. Availability-ийн 90% SLO нь 2 минутын цонхонд 12 секундийн хугацааны error budget өгнө.
