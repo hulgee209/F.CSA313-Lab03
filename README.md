@@ -59,3 +59,14 @@ k6.exe v2.2.0 (commit/00a9a1b7f5, go1.26.5, windows/amd64)
 | Нэмэлт performance | `/report` latency | p95 < 450 ms | 20 VU тогтмол ачаалал, 1 минут | `http_req_duration{name:report}: p(95)<450` |
 
 `/cart/add` нь локал, хөнгөн endpoint тул p95 < 30 ms босго сонгосон; 200 ms нь бодит гүйцэтгэлийг ялгахгүй хэт сул байх болно. `/report` нь 200–400 ms зориудын сааталтай учраас p95 < 450 ms босго бодитой нөөцтэй. `/pay` endpoint-ийн загварчилсан алдаа ойролцоогоор 5% тул < 8% босго нь хэвийн хэлбэлзлийг зөвшөөрнө. Availability-ийн 90% SLO нь 2 минутын цонхонд 12 секундийн хугацааны error budget өгнө.
+
+## Normal PASS test
+
+20 VU, 1 минутын normal test-д бүх threshold PASS болсон.
+
+- `/cart/add` p95: 3.94 ms (`p(95)<30` PASS)
+- `/report` p95: 395.53 ms (`p(95)<450` PASS)
+- `/pay` error rate: 5.39% (`rate<0.08` PASS)
+- Request-based availability (`checks`): 98.20% (`rate>0.90` PASS)
+
+Бүтэн k6 гаралт: [`results/pass.txt`](results/pass.txt). Screenshot: [normal PASS output](screenshots/pass.png).
