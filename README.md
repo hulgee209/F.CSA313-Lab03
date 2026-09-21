@@ -86,3 +86,29 @@ k6.exe v2.2.0 (commit/00a9a1b7f5, go1.26.5, windows/amd64)
 Chaos үед server унасан тул `/pay` хүсэлтүүд ч зэрэг унаж reliability threshold мөн FAIL болсон. Availability SLI-г reliability-гээс тусгаарлахын тулд availability check-д зөвхөн cart/report зэрэг endpoint-уудын health check-ийг оруулж, `/pay`-ийн endpoint tag-тэй error rate-ийг reliability SLI болгон тусад нь үнэлж болно.
 
 Бүтэн k6 гаралт: [`results/chaos.txt`](results/chaos.txt). Screenshots: [chaos summary](screenshots/chaos.png), [chaos thresholds](screenshots/chaos-thresholds.png).
+
+## Зориуд FAIL болгосон threshold
+
+`slo-test-fail.js` нь normal test-тэй ижил 20 VU, 1 минутын тохиргоотой боловч `/report` threshold-ийг зориудаар `p(95)<100` болгон хатууруулсан. `/report` endpoint нь 200–400 ms сааталтай тул бодит p95 `398.71 ms` гарч threshold FAIL болсон.
+
+- `/report` p95: 398.71 ms (`p(95)<100` FAIL)
+- `/cart/add` p95: 3.99 ms (`p(95)<30` PASS)
+- `/pay` error rate: 4.89% (`rate<0.08` PASS)
+- Availability (`checks`): 98.36% (`rate>0.90` PASS)
+- k6 exit code: 99
+
+k6 нь `thresholds on metrics 'http_req_duration{name:report}' have been crossed` error-оор гарсан бөгөөд PowerShell-ийн `$LASTEXITCODE` нь `99` болсон. Энэ exit code-г CI pipeline quality gate ашиглан build-ийг зогсооход ашиглаж болно.
+
+Бүтэн k6 гаралт: [`results/fail.txt`](results/fail.txt). Screenshots: [FAIL summary and exit code](screenshots/fail.png), [FAIL thresholds](screenshots/fail-thresholds.png).
+
+## Дүгнэлт
+
+1. Энэ лабораторид чанарын сценариог SLI, SLO, дараа нь k6 threshold болгон хөрвүүлж автомат шалгалт хийсэн.
+2. Normal PASS test-д `/cart/add` p95 3.94 ms гарсан нь локал хөнгөн endpoint-д сонгосон 30 ms босгыг хангалттай нарийн шалгаж байгааг харуулсан.
+3. `/report` endpoint-ийн normal p95 395.53 ms нь зориудын 200–400 ms сааталтай нийцэж, 450 ms SLO-г хангасан.
+4. `/pay` endpoint-ийн normal error rate 5.39% байсан нь загварчилсан 5%-ийн алдааны давтамжтай ойролцоо бөгөөд 8%-ийн reliability SLO-г хангасан.
+5. Normal test-ийн request-based availability 98.20% байсан тул 90%-ийн availability SLO PASS болсон.
+6. Chaos test-д 10 секунд server зогсооход availability 85.02% болж, request-based error budget ойролцоогоор 283 check-ээр хэтэрсэн.
+7. Цагаар тооцсон 12 секундийн budget болон хүсэлтээр тооцсон budget зөрсөн нь server унахад connection-refused хүсэлтүүд удаан `/report` хариуг хүлээхгүй хурдан буцсантай холбоотой.
+8. Chaos үед `/pay` error rate 17.79% болсон нь нэг server crash availability болон reliability SLO-г зэрэг зөрчиж болохыг баталсан.
+9. Хамгийн хэцүү хэсэг нь бодит системийн зан төлөвт тохирсон босго сонгох байсан бөгөөд зориудын `p(95)<100` threshold-ийн 398.71 ms FAIL нь сценарийн бодит нөхцөлгүй SLO утга утгагүйг харуулсан.
